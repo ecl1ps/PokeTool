@@ -69,7 +69,7 @@ public class PokedexFragment extends Fragment implements MainActivity.Updatable 
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_pokedex, container, false);
 
-        mGridView = (GridView) rootView.findViewById(R.id.gridView);
+        mGridView = (GridView) rootView.findViewById(R.id.gridViewPokedex);
         setInventories();
         return rootView;
     }

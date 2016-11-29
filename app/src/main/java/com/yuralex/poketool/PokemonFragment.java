@@ -29,6 +29,7 @@ import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
 
+import com.omkarmoghe.pokemap.controllers.app_preferences.PokemapSharedPreferences;
 import com.omkarmoghe.pokemap.controllers.net.NianticManager;
 import com.omkarmoghe.pokemap.views.LoginActivity;
 import com.pokegoapi.api.PokemonGo;
@@ -63,6 +64,7 @@ public class PokemonFragment extends Fragment implements MainActivity.Updatable 
     private StableArrayAdapter mGridAdapter;
     private GridView mGridView;
     private ProgressDialog mProgress;
+    private PokemapSharedPreferences mPref;
 
     public PokemonFragment() {
     }
@@ -77,6 +79,9 @@ public class PokemonFragment extends Fragment implements MainActivity.Updatable 
         mActivity = getActivity();
         if (mActivity == null)
             return;
+
+        mPref = new PokemapSharedPreferences(mActivity);
+
         setHasOptionsMenu(true);
 
         DaoPokemon daoPokemon = new DaoPokemon();
@@ -90,19 +95,20 @@ public class PokemonFragment extends Fragment implements MainActivity.Updatable 
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_pokemon, container, false);
 
-        mGridView = (GridView) rootView.findViewById(R.id.gridView);
+        mGridView = (GridView) rootView.findViewById(R.id.gridViewPokemon);
         mGridView.setChoiceMode(GridView.CHOICE_MODE_MULTIPLE_MODAL);
         mGridView.setMultiChoiceModeListener(new MultiChoiceModeListener());
 
+        mSort = mPref.getSortType();
         Spinner spinner = (Spinner) rootView.findViewById(R.id.spinner);
         if (spinner != null) {
+            spinner.setSelection(mSort);
             spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                 @Override
                 public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                    mPref.setSortType(position);
                     mSort = position;
-                    Collections.sort(mPokemons, getPokemonComparator());
-                    mGridAdapter.notifyDataSetChanged();
-                    mGridView.invalidateViews();
+                    sortPokemon();
                 }
                 @Override
                 public void onNothingSelected(AdapterView<?> parent) {
@@ -111,6 +117,12 @@ public class PokemonFragment extends Fragment implements MainActivity.Updatable 
         }
         setPokemons();
         return rootView;
+    }
+
+    private void sortPokemon() {
+        Collections.sort(mPokemons, getPokemonComparator());
+        mGridAdapter.notifyDataSetChanged();
+        mGridView.invalidateViews();
     }
 
     @Override

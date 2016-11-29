@@ -40,6 +40,8 @@ public final class PokemapSharedPreferences implements PokemapAppPreferences {
     private static final String INFO_USERNAME = "username=";
     private static final String INFO_PASSWORD = "password=";
 
+    private static final String SORT_TYPE = "sort_type";
+
     private final SharedPreferences sharedPreferences;
 
     public PokemapSharedPreferences(@NonNull Context context) {
@@ -222,5 +224,13 @@ public final class PokemapSharedPreferences implements PokemapAppPreferences {
     @Override
     public int getServiceRefreshRate() {
         return Integer.valueOf(sharedPreferences.getString(SERVICE_REFRESH_KEY, "60"));
+    }
+
+    public void setSortType(int sortType) {
+        sharedPreferences.edit().putInt(SORT_TYPE, sortType).apply();
+    }
+
+    public int getSortType() {
+        return sharedPreferences.getInt(SORT_TYPE, 0);
     }
 }
