@@ -9,7 +9,6 @@ import android.net.Uri;
 import android.support.compat.BuildConfig;
 import android.support.v4.content.FileProvider;
 
-import com.google.android.gms.ads.mediation.customevent.CustomEvent;
 import com.yuralex.poketool.MainActivity;
 import com.yuralex.poketool.R;
 

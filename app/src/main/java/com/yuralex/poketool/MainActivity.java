@@ -21,7 +21,6 @@ import android.view.MenuItem;
 import android.view.ViewGroup;
 import android.widget.Toast;
 
-import com.google.android.gms.ads.MobileAds;
 import com.omkarmoghe.pokemap.controllers.app_preferences.PokemapSharedPreferences;
 import com.omkarmoghe.pokemap.controllers.net.NianticManager;
 import com.omkarmoghe.pokemap.views.LoginActivity;
@@ -44,7 +43,6 @@ public class MainActivity extends AppCompatActivity implements AppUpdateLoader.O
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        MobileAds.initialize(getApplicationContext(), "");
         mPref = new PokemapSharedPreferences(this);
 
         mCollectionPagerAdapter = new CollectionPagerAdapter(getSupportFragmentManager());

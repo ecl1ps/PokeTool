@@ -29,8 +29,6 @@ import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
 
-import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.AdView;
 import com.omkarmoghe.pokemap.controllers.net.NianticManager;
 import com.omkarmoghe.pokemap.views.LoginActivity;
 import com.pokegoapi.api.PokemonGo;
@@ -92,11 +90,6 @@ public class PokemonFragment extends Fragment implements MainActivity.Updatable 
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_pokemon, container, false);
 
-        AdView mAdView = (AdView) rootView.findViewById(R.id.adViewPokemon);
-        AdRequest adRequest = new AdRequest.Builder().build();
-        if (mAdView != null) {
-            mAdView.loadAd(adRequest);
-        }
         mGridView = (GridView) rootView.findViewById(R.id.gridView);
         mGridView.setChoiceMode(GridView.CHOICE_MODE_MULTIPLE_MODAL);
         mGridView.setMultiChoiceModeListener(new MultiChoiceModeListener());
