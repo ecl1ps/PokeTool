@@ -30,7 +30,7 @@ public class AppUpdateLoader extends AsyncTask<Void, Void, AppUpdateEvent> {
         AppUpdateEvent appUpdateEvent;
 
         OkHttpClient httpClient = new OkHttpClient();
-        String apiEndpoint = "https://api.github.com/repos/procks/PokeTool/releases";
+        String apiEndpoint = "https://api.github.com/repos/ecl1ps/PokeTool/releases";
         Request request = new Request.Builder()
                 .url(apiEndpoint)
                 .build();
