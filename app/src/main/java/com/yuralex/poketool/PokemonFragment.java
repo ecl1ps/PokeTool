@@ -1,7 +1,6 @@
 package com.yuralex.poketool;
 
 import android.annotation.SuppressLint;
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
@@ -36,7 +35,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 
 public class PokemonFragment extends Fragment implements MainActivity.Updatable {
     private static final String TAG = PokemonFragment.class.getSimpleName();
@@ -56,7 +54,6 @@ public class PokemonFragment extends Fragment implements MainActivity.Updatable 
     private FragmentActivity mActivity;
     private StableArrayAdapter mGridAdapter;
     private GridView mGridView;
-    private ProgressDialog mProgress;
     private PokemapSharedPreferences mPref;
 
     public PokemonFragment() {
@@ -129,11 +126,6 @@ public class PokemonFragment extends Fragment implements MainActivity.Updatable 
         Collections.sort(mPokemons, getPokemonComparator());
         mGridAdapter.notifyDataSetChanged();
         mGridView.invalidateViews();
-    }
-
-    @Override
-    public void onDetach() {
-        super.onDetach();
     }
 
     private static float pokemonIv(PokemonDto p) {
@@ -235,21 +227,18 @@ public class PokemonFragment extends Fragment implements MainActivity.Updatable 
     }
 
     private class StableArrayAdapter extends ArrayAdapter<PokemonDto> {
-        private final Context mmContext;
-        List<PokemonDto> mmPokemons;
-        private HashMap<Integer, Boolean> mSelection = new HashMap<>();
+        private List<PokemonDto> pokemons;
+        private HashMap<Integer, Boolean> selection = new HashMap<>();
 
         StableArrayAdapter(Context context, int textViewResourceId, List<PokemonDto> pokemons) {
             super(context, textViewResourceId, pokemons);
-            mmContext = context;
-            mmPokemons = pokemons;
+            this.pokemons = pokemons;
         }
 
         @NonNull
         @Override
         public View getView(int position, View convertView, @NonNull ViewGroup parent) {
-            LayoutInflater inflater = (LayoutInflater) mmContext
-                    .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            LayoutInflater inflater = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             @SuppressLint("ViewHolder")
             View rowView = inflater.inflate(R.layout.pokemon_list_item, parent, false);
             TextView firstLine = (TextView) rowView.findViewById(R.id.firstLine);
@@ -257,7 +246,7 @@ public class PokemonFragment extends Fragment implements MainActivity.Updatable 
             TextView thirdLine = (TextView) rowView.findViewById(R.id.thirdLine);
             TextView fourthLine = (TextView) rowView.findViewById(R.id.fourthLine);
             ImageView imageView = (ImageView) rowView.findViewById(R.id.icon);
-            PokemonDto p = mmPokemons.get(position);
+            PokemonDto p = pokemons.get(position);
             if (p != null) {
                 String name = p.getNickname();
                 if ("".equals(name) || name == null) {
@@ -272,29 +261,10 @@ public class PokemonFragment extends Fragment implements MainActivity.Updatable 
             }
 
             rowView.setBackgroundColor(Color.TRANSPARENT); //default color
-            if (mSelection.get(position) != null) {
+            if (selection.get(position) != null) {
                 rowView.setBackgroundColor(ContextCompat.getColor(mActivity, R.color.holo_blue_light));// this is a selected position so make it red
             }
             return rowView;
-        }
-
-        void setNewSelection(int position, boolean value) {
-            mSelection.put(position, value);
-            notifyDataSetChanged();
-        }
-
-        Set<Integer> getCurrentCheckedPosition() {
-            return mSelection.keySet();
-        }
-
-        void removeSelection(int position) {
-            mSelection.remove(position);
-            notifyDataSetChanged();
-        }
-
-        void clearSelection() {
-            mSelection = new HashMap<>();
-            notifyDataSetChanged();
         }
 
         String properCase (String inputVal) {

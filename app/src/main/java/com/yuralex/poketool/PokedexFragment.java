@@ -21,26 +21,22 @@ import com.omkarmoghe.pokemap.controllers.net.NianticManager;
 import com.omkarmoghe.pokemap.views.LoginActivity;
 import com.pokegoapi.api.PokemonGo;
 import com.pokegoapi.api.inventory.Inventories;
-import com.pokegoapi.api.inventory.Pokedex;
 import com.pokegoapi.api.pokemon.Pokemon;
-import com.pokegoapi.api.pokemon.PokemonMeta;
-import com.pokegoapi.api.pokemon.PokemonMetaRegistry;
 import com.pokegoapi.exceptions.LoginFailedException;
 import com.pokegoapi.exceptions.RemoteServerException;
 
 import java.util.Locale;
 
-import POGOProtos.Enums.PokemonFamilyIdOuterClass;
-import POGOProtos.Enums.PokemonIdOuterClass;
-
 public class PokedexFragment extends Fragment implements MainActivity.Updatable {
     private static final String TAG = PokedexFragment.class.getSimpleName();
+    private static final String STATE_POKEDEX = "pokedex";
+
     private SparseArray<PokemonImg> mPokemonImages;
     private FragmentActivity mActivity;
     private StableArrayAdapter mGridAdapter;
     private GridView mGridView;
     private PokemonGo mGo;
-    private Inventories mInventories;
+    private PokedexDto pokedex;
 
     public PokedexFragment() {
         // Required empty public constructor
@@ -65,29 +61,35 @@ public class PokedexFragment extends Fragment implements MainActivity.Updatable 
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        View rootView = inflater.inflate(R.layout.fragment_pokedex, container, false);
-
-        mGridView = (GridView) rootView.findViewById(R.id.gridViewPokedex);
-        setInventories();
-        return rootView;
+    public void onSaveInstanceState(Bundle outState) {
+        outState.putParcelable(STATE_POKEDEX, pokedex);
+        super.onSaveInstanceState(outState);
     }
 
     @Override
-    public void onDetach() {
-        super.onDetach();
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        View rootView = inflater.inflate(R.layout.fragment_pokedex, container, false);
+
+        mGridView = (GridView) rootView.findViewById(R.id.gridViewPokedex);
+
+        if (pokedex == null && savedInstanceState != null)
+            pokedex = savedInstanceState.getParcelable(STATE_POKEDEX);
+
+        if (pokedex == null)
+            loadPokedex();
+
+        updateList();
+        return rootView;
     }
 
     private void updateList() {
-        if (mInventories == null) {
+        if (pokedex == null) {
             startActivity(new Intent(mActivity, LoginActivity.class));
             mActivity.finish();
             return;
         }
 
-        mGridAdapter = new StableArrayAdapter(mActivity,
-                android.R.layout.simple_list_item_1, mInventories.getPokedex());
+        mGridAdapter = new StableArrayAdapter(mActivity, android.R.layout.simple_list_item_1, pokedex, mPokemonImages);
         if (mGridView != null) {
             mGridView.setAdapter(mGridAdapter);
         } else {
@@ -95,30 +97,31 @@ public class PokedexFragment extends Fragment implements MainActivity.Updatable 
         }
     }
 
-    public void setInventories() {
+    private void loadPokedex() {
         try {
             if (mGo != null) {
-                mInventories = mGo.getInventories();
+                Inventories inventories = mGo.getInventories();
+                pokedex = new PokedexDto(inventories.getPokebank(), inventories.getCandyjar());
             }
         } catch (LoginFailedException | RemoteServerException e) {
             e.printStackTrace();
         }
-        updateList();
     }
 
     @Override
     public void update() {
-        setInventories();
+        loadPokedex();
+        updateList();
     }
 
     private class StableArrayAdapter extends ArrayAdapter<Pokemon> {
-        private final Context mmContext;
-        Pokedex mmPokedex;
+        private final PokedexDto pokedex;
+        private final SparseArray<PokemonImg> images;
 
-        StableArrayAdapter(Context context, int textViewResourceId, Pokedex pokedex) {
+        StableArrayAdapter(Context context, int textViewResourceId, PokedexDto pokedex, SparseArray<PokemonImg> images) {
             super(context, textViewResourceId);
-            mmContext = context;
-            mmPokedex = pokedex;
+            this.pokedex = pokedex;
+            this.images = images;
         }
 
         @NonNull
@@ -126,51 +129,44 @@ public class PokedexFragment extends Fragment implements MainActivity.Updatable 
         public View getView(int position, View convertView, @NonNull ViewGroup parent) {
             View rowView;
             if (convertView == null) {
-                LayoutInflater inflater = (LayoutInflater) mmContext
+                LayoutInflater inflater = (LayoutInflater) getContext()
                         .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
                 rowView = inflater.inflate(R.layout.pokemon_list_item, parent, false);
 
             } else {
                 rowView = convertView;
             }
-            position = position + 1;
+
             TextView firstLine = (TextView) rowView.findViewById(R.id.firstLine);
             TextView secondLine = (TextView) rowView.findViewById(R.id.secondLine);
             TextView thirdLine = (TextView) rowView.findViewById(R.id.thirdLine);
             TextView fourthLine = (TextView) rowView.findViewById(R.id.fourthLine);
             ImageView imageView = (ImageView) rowView.findViewById(R.id.icon);
 
-            PokemonIdOuterClass.PokemonId pokemonId = PokemonIdOuterClass.PokemonId.internalGetValueMap().findValueByNumber(position);
-            if (pokemonId != null) {
-                PokemonMeta meta = PokemonMetaRegistry.getMeta(pokemonId);
-                PokemonFamilyIdOuterClass.PokemonFamilyId familyId = meta.getFamily();
-                int pokemonsSize = mInventories.getPokebank().getPokemonByPokemonId(pokemonId).size();
-                int candiesSize = mInventories.getCandyjar().getCandies(familyId);
-                int candyToEvolve = meta.getCandyToEvolve();
-                int evolutions = 0;
-                if (candyToEvolve != 0) {
-                    evolutions = candiesSize / candyToEvolve;
-                }
+            int pokedexId = position + 1;
+            PokedexEntryDto entry = pokedex.get(pokedexId);
 
-                firstLine.setText(pokemonId.name());
-                secondLine.setText(String.format(Locale.ROOT, "pokemons %d", pokemonsSize));
-                if (pokemonsSize == 0) {
-                    firstLine.setTextColor(ContextCompat.getColor(mmContext, android.R.color.holo_red_dark));
-                    secondLine.setTextColor(ContextCompat.getColor(mmContext, android.R.color.holo_red_dark));
+            if (entry != null) {
+
+                firstLine.setText(entry.getName());
+                secondLine.setText(String.format(Locale.ROOT, "pokemons %d", entry.getPokemonCount()));
+                if (entry.getPokemonCount() == 0) {
+                    firstLine.setTextColor(ContextCompat.getColor(getContext(), android.R.color.holo_red_dark));
+                    secondLine.setTextColor(ContextCompat.getColor(getContext(), android.R.color.holo_red_dark));
                 } else {
-                    firstLine.setTextColor(ContextCompat.getColor(mmContext, android.R.color.tertiary_text_light));
-                    secondLine.setTextColor(ContextCompat.getColor(mmContext, android.R.color.tertiary_text_light));
+                    firstLine.setTextColor(ContextCompat.getColor(getContext(), android.R.color.tertiary_text_light));
+                    secondLine.setTextColor(ContextCompat.getColor(getContext(), android.R.color.tertiary_text_light));
                 }
-                thirdLine.setText(String.format(Locale.ROOT, "candies %d/%d", candiesSize, candyToEvolve));
-                if (candiesSize >= candyToEvolve && candyToEvolve > 0) {
-                    thirdLine.setTextColor(ContextCompat.getColor(mmContext, android.R.color.holo_green_dark));
+                thirdLine.setText(String.format(Locale.ROOT, "candies %d/%d", entry.getCandy(), entry.getCandyToEvolve()));
+                if (entry.getCandy() >= entry.getCandyToEvolve() && entry.getCandyToEvolve() > 0) {
+                    thirdLine.setTextColor(ContextCompat.getColor(getContext(), android.R.color.holo_green_dark));
                 } else {
-                    thirdLine.setTextColor(ContextCompat.getColor(mmContext, android.R.color.tertiary_text_light));
+                    thirdLine.setTextColor(ContextCompat.getColor(getContext(), android.R.color.tertiary_text_light));
                 }
-                fourthLine.setText(String.format(Locale.ROOT, "E %d P %d", evolutions, pokemonsSize - evolutions));
-                PokemonImg pokeImg = mPokemonImages.get(position);
+                fourthLine.setText(String.format(Locale.ROOT, "E %d P %d", entry.getEvolutions(), entry.getPokemonForGrinder()));
+                PokemonImg pokeImg = images.get(pokedexId);
                 if (pokeImg != null) {
-                    imageView.setImageResource(mPokemonImages.get(position).getImagem());
+                    imageView.setImageResource(images.get(pokedexId).getImagem());
                 }
             } else {
                 secondLine.setText("");
@@ -184,7 +180,7 @@ public class PokedexFragment extends Fragment implements MainActivity.Updatable 
 
         @Override
         public int getCount() {
-            return PokemonIdOuterClass.PokemonId.values().length - 2;
+            return pokedex.count();
         }
     }
 }
