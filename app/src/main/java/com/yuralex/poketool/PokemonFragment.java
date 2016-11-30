@@ -3,25 +3,18 @@ package com.yuralex.poketool;
 import android.annotation.SuppressLint;
 import android.app.ProgressDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.GridView;
@@ -37,15 +30,13 @@ import com.pokegoapi.api.pokemon.Pokemon;
 import com.pokegoapi.exceptions.LoginFailedException;
 import com.pokegoapi.exceptions.RemoteServerException;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-
-import POGOProtos.Networking.Responses.NicknamePokemonResponseOuterClass;
-import POGOProtos.Networking.Responses.ReleasePokemonResponseOuterClass;
 
 public class PokemonFragment extends Fragment implements MainActivity.Updatable {
     private static final String TAG = PokemonFragment.class.getSimpleName();
@@ -55,9 +46,11 @@ public class PokemonFragment extends Fragment implements MainActivity.Updatable 
     private static final int SORT_TYPE_CP = 2;
     private static final int SORT_TYPE_IV = 3;
     private static final int SORT_RECENT = 4;
+    private static final String STATE_POKEMONS = "pokemons";
+
     private SparseArray<PokemonImg> mPokemonImages;
     private PokemonGo mGo;
-    private List<Pokemon> mPokemons;
+    private ArrayList<PokemonDto> mPokemons;
     private int mSort;
 
     private FragmentActivity mActivity;
@@ -91,6 +84,12 @@ public class PokemonFragment extends Fragment implements MainActivity.Updatable 
     }
 
     @Override
+    public void onSaveInstanceState(Bundle outState) {
+        outState.putParcelableArrayList(STATE_POKEMONS, mPokemons);
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_pokemon, container, false);
@@ -115,7 +114,14 @@ public class PokemonFragment extends Fragment implements MainActivity.Updatable 
                 }
             });
         }
-        setPokemons();
+
+        if (mPokemons == null && savedInstanceState != null)
+            mPokemons = savedInstanceState.getParcelableArrayList(STATE_POKEMONS);
+
+        if (mPokemons == null)
+            loadPokemons();
+
+        updateList();
         return rootView;
     }
 
@@ -130,46 +136,46 @@ public class PokemonFragment extends Fragment implements MainActivity.Updatable 
         super.onDetach();
     }
 
-    private static float pokemonIv(Pokemon p) {
+    private static float pokemonIv(PokemonDto p) {
         return (p.getIndividualAttack()
                 + p.getIndividualDefense()
                 + p.getIndividualStamina()) * 100 / 45f;
     }
 
-    private static class ComparatorIv implements Comparator<Pokemon> {
-        public int compare(Pokemon p1, Pokemon p2) {
+    private static class ComparatorIv implements Comparator<PokemonDto> {
+        public int compare(PokemonDto p1, PokemonDto p2) {
             return (int) (pokemonIv(p2) - pokemonIv(p1));
         }
     }
 
-    private static class ComparatorCp implements Comparator<Pokemon>{
-        public int compare(Pokemon p1, Pokemon p2) {
+    private static class ComparatorCp implements Comparator<PokemonDto>{
+        public int compare(PokemonDto p1, PokemonDto p2) {
             return p2.getCp() - p1.getCp();
         }
     }
 
-    private static class ComparatorTypeIv implements Comparator<Pokemon>{
-        public int compare(Pokemon p1, Pokemon p2) {
-            int compare = p1.getPokemonId().getNumber() - p2.getPokemonId().getNumber();
+    private static class ComparatorTypeIv implements Comparator<PokemonDto>{
+        public int compare(PokemonDto p1, PokemonDto p2) {
+            int compare = p1.getPokemonId() - p2.getPokemonId();
             return compare != 0 ? compare : (int) (pokemonIv(p2) - pokemonIv(p1));
         }
     }
 
-    private static class ComparatorTypeCp implements Comparator<Pokemon>{
-        public int compare(Pokemon p1, Pokemon p2) {
-            int compare = p1.getPokemonId().getNumber() - p2.getPokemonId().getNumber();
+    private static class ComparatorTypeCp implements Comparator<PokemonDto>{
+        public int compare(PokemonDto p1, PokemonDto p2) {
+            int compare = p1.getPokemonId() - p2.getPokemonId();
             return compare != 0 ? compare : p2.getCp() - p1.getCp();
         }
     }
 
-    private class ComparatorRecent implements Comparator<Pokemon> {
-        public int compare(Pokemon p1, Pokemon p2) {
+    private class ComparatorRecent implements Comparator<PokemonDto> {
+        public int compare(PokemonDto p1, PokemonDto p2) {
             return (int) (p2.getCreationTimeMs() - p1.getCreationTimeMs());
         }
     }
 
-    private Comparator<Pokemon> getPokemonComparator() {
-        Comparator<Pokemon> comparator;
+    private Comparator<PokemonDto> getPokemonComparator() {
+        Comparator<PokemonDto> comparator;
         switch (mSort) {
             case SORT_CP:
                 comparator = new ComparatorCp();
@@ -193,18 +199,21 @@ public class PokemonFragment extends Fragment implements MainActivity.Updatable 
     }
 
     public void update() {
-        setPokemons();
+        loadPokemons();
+        updateList();
     }
 
-    private void setPokemons() {
+    private void loadPokemons() {
         try {
             if (mGo != null) {
-                mPokemons = mGo.getInventories().getPokebank().getPokemons();
+                mPokemons = new ArrayList<>();
+                List<Pokemon> pokemons = mGo.getInventories().getPokebank().getPokemons();
+                for (Pokemon p: pokemons)
+                    mPokemons.add(new PokemonDto(p));
             }
         } catch (LoginFailedException | RemoteServerException e) {
             e.printStackTrace();
         }
-        updateList();
     }
 
     private void updateList() {
@@ -225,12 +234,12 @@ public class PokemonFragment extends Fragment implements MainActivity.Updatable 
         }
     }
 
-    private class StableArrayAdapter extends ArrayAdapter<Pokemon> {
+    private class StableArrayAdapter extends ArrayAdapter<PokemonDto> {
         private final Context mmContext;
-        List<Pokemon> mmPokemons;
+        List<PokemonDto> mmPokemons;
         private HashMap<Integer, Boolean> mSelection = new HashMap<>();
 
-        StableArrayAdapter(Context context, int textViewResourceId, List<Pokemon> pokemons) {
+        StableArrayAdapter(Context context, int textViewResourceId, List<PokemonDto> pokemons) {
             super(context, textViewResourceId, pokemons);
             mmContext = context;
             mmPokemons = pokemons;
@@ -248,18 +257,18 @@ public class PokemonFragment extends Fragment implements MainActivity.Updatable 
             TextView thirdLine = (TextView) rowView.findViewById(R.id.thirdLine);
             TextView fourthLine = (TextView) rowView.findViewById(R.id.fourthLine);
             ImageView imageView = (ImageView) rowView.findViewById(R.id.icon);
-            Pokemon p = mmPokemons.get(position);
+            PokemonDto p = mmPokemons.get(position);
             if (p != null) {
                 String name = p.getNickname();
                 if ("".equals(name) || name == null) {
-                    name = properCase(p.getPokemonId().name());
+                    name = properCase(p.getPokemonName());
                 }
                 firstLine.setText(name);
                 secondLine.setText(String.format(Locale.ROOT, "IV%.2f%%", p.getIvRatio() * 100f));
                 thirdLine.setText(String.format(Locale.ROOT, "CP%d lv%.1f", p.getCp(), p.getLevel()));
                 fourthLine.setText(String.format(Locale.ROOT, "%d/%d/%d",
                         p.getIndividualAttack(), p.getIndividualDefense(), p.getIndividualStamina()));
-                imageView.setImageResource(mPokemonImages.get(p.getPokemonId().getNumber()).getImagem());
+                imageView.setImageResource(mPokemonImages.get(p.getPokemonId()).getImagem());
             }
 
             rowView.setBackgroundColor(Color.TRANSPARENT); //default color
