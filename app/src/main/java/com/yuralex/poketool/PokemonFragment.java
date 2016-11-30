@@ -96,8 +96,8 @@ public class PokemonFragment extends Fragment implements MainActivity.Updatable 
         View rootView = inflater.inflate(R.layout.fragment_pokemon, container, false);
 
         mGridView = (GridView) rootView.findViewById(R.id.gridViewPokemon);
-        mGridView.setChoiceMode(GridView.CHOICE_MODE_MULTIPLE_MODAL);
-        mGridView.setMultiChoiceModeListener(new MultiChoiceModeListener());
+        //mGridView.setChoiceMode(GridView.CHOICE_MODE_MULTIPLE_MODAL);
+        //mGridView.setMultiChoiceModeListener(new MultiChoiceModeListener());
 
         mSort = mPref.getSortType();
         Spinner spinner = (Spinner) rootView.findViewById(R.id.spinner);
@@ -123,22 +123,6 @@ public class PokemonFragment extends Fragment implements MainActivity.Updatable 
         Collections.sort(mPokemons, getPokemonComparator());
         mGridAdapter.notifyDataSetChanged();
         mGridView.invalidateViews();
-    }
-
-    @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        super.onCreateOptionsMenu(menu, inflater);
-        inflater.inflate(R.menu.menu_pokemons, menu);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.action_rename_by_iv:
-                renameByIv();
-                return true;
-        }
-        return super.onOptionsItemSelected(item);
     }
 
     @Override
@@ -303,175 +287,20 @@ public class PokemonFragment extends Fragment implements MainActivity.Updatable 
             mSelection = new HashMap<>();
             notifyDataSetChanged();
         }
-    }
 
-    private void transferSelectedItems() {
-        mProgress = ProgressDialog.show(mActivity, mActivity.getString(R.string.transfer_title),
-                mActivity.getString(R.string.please_waite), true);
-        new TransferAsyncTask().execute();
-    }
+        String properCase (String inputVal) {
+            // Empty strings should be returned as-is.
 
-    private void renameByIv() {
-        new AlertDialog.Builder(mActivity)
-                .setIcon(android.R.drawable.ic_dialog_alert)
-                .setTitle(getString(R.string.rename_by_iv))
-                .setMessage(getString(R.string.rename_by_iv_dialog_msg))
-                .setPositiveButton(getString(android.R.string.yes), new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        mProgress = ProgressDialog.show(mActivity, mActivity.getString(R.string.rename_title),
-                                mActivity.getString(R.string.please_waite), true);
-                        new RenameAsyncTask().execute();
-                    }
-                })
-                .setNegativeButton(getString(android.R.string.no), null)
-                .show();
-    }
+            if (inputVal.length() == 0) return "";
 
-    private class TransferAsyncTask extends AsyncTask<Void, Void, Integer> {
-        @Override
-        protected Integer doInBackground(Void... params) {
-            int count = 0;
-            for (int position : mGridAdapter.getCurrentCheckedPosition()) {
-                Log.e(TAG, "Transfer " + position);
-                Pokemon pokemon = mPokemons.get(position);
-                if (pokemon != null) {
-                    try {
-                        ReleasePokemonResponseOuterClass.ReleasePokemonResponse.Result result = pokemon.transferPokemon();
-                        if (result == ReleasePokemonResponseOuterClass.ReleasePokemonResponse.Result.SUCCESS) count++;
-                        Log.i(TAG, "Transfered result:" + result);
-                    } catch (LoginFailedException | RemoteServerException e) {
-                        e.printStackTrace();
-                    }
-                }
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException ignored) {
-                }
-            }
-            try {
-                mPokemons = mGo.getInventories().getPokebank().getPokemons();
-            } catch (LoginFailedException | RemoteServerException e) {
-                e.printStackTrace();
-            }
-            return count;
-        }
+            // Strings with only one character uppercased.
 
-        @Override
-        protected void onPostExecute(Integer result) {
-            mProgress.dismiss();
-//            if (result > 0)
-            updateList();
-        }
-    }
+            if (inputVal.length() == 1) return inputVal.toUpperCase();
 
-    String properCase (String inputVal) {
-        // Empty strings should be returned as-is.
+            // Otherwise uppercase first letter, lowercase the rest.
 
-        if (inputVal.length() == 0) return "";
-
-        // Strings with only one character uppercased.
-
-        if (inputVal.length() == 1) return inputVal.toUpperCase();
-
-        // Otherwise uppercase first letter, lowercase the rest.
-
-        return inputVal.substring(0,1).toUpperCase()
-                + inputVal.substring(1).toLowerCase();
-    }
-
-    private class RenameAsyncTask extends AsyncTask<Void, Void, Integer> {
-        @Override
-        protected Integer doInBackground(Void... params) {
-            int count = 0;
-            for (Pokemon p : mPokemons) {
-//                Log.e(TAG, "rename " + position);
-                if (p != null) {
-                    try {
-                        String name = String.format(Locale.ROOT, "%d%%%d/%d/%d", //%s properCase(p.getPokemonId().name()),
-                                (int) (p.getIvRatio() * 100), p.getIndividualAttack(), p.getIndividualDefense(), p.getIndividualStamina());
-                        NicknamePokemonResponseOuterClass.NicknamePokemonResponse.Result result = p.renamePokemon(name);
-                        if (result == NicknamePokemonResponseOuterClass.NicknamePokemonResponse.Result.SUCCESS) count++;
-                        Log.e(TAG, "Rename result:" + result);
-                    } catch (LoginFailedException | RemoteServerException e) {
-                        e.printStackTrace();
-                    }
-                }
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException ignored) {
-                }
-            }
-            try {
-                mPokemons = mGo.getInventories().getPokebank().getPokemons();
-            } catch (LoginFailedException | RemoteServerException e) {
-                e.printStackTrace();
-            }
-            return count;
-        }
-
-        @Override
-        protected void onPostExecute(Integer result) {
-            mProgress.dismiss();
-//            if (result > 0)
-            updateList();
-        }
-    }
-
-    private class MultiChoiceModeListener implements AbsListView.MultiChoiceModeListener {
-        private int nr = 0;
-
-        @Override
-        public void onItemCheckedStateChanged(android.view.ActionMode mode, int position,
-                                              long id, boolean checked) {
-            // Here you can do something when items are selected/de-selected,
-            // such as update the title in the CAB
-            if (checked) {
-                nr++;
-                mGridAdapter.setNewSelection(position, true); //checked
-            } else {
-                nr--;
-                mGridAdapter.removeSelection(position);
-            }
-            mode.setTitle(nr + " selected");
-        }
-
-        @Override
-        public boolean onActionItemClicked(android.view.ActionMode mode, MenuItem item) {
-            // Respond to clicks on the actions in the CAB
-            switch (item.getItemId()) {
-                case R.id.menu_transfer:
-                    transferSelectedItems();
-                    nr = 0;
-                    mGridAdapter.clearSelection();
-                    mode.finish(); // Action picked, so close the CAB
-                    return true;
-                default:
-                    return false;
-            }
-        }
-
-        @Override
-        public boolean onCreateActionMode(android.view.ActionMode mode, Menu menu) {
-            // Inflate the menu for the CAB
-            MenuInflater inflater = mode.getMenuInflater();
-            inflater.inflate(R.menu.menu_pokemons_context, menu);
-            return true;
-        }
-
-        @Override
-        public void onDestroyActionMode(android.view.ActionMode mode) {
-            // Here you can make any necessary updates to the activity when
-            // the CAB is removed. By default, selected items are deselected/unchecked.
-            mGridAdapter.clearSelection();
-        }
-
-        @Override
-        public boolean onPrepareActionMode(android.view.ActionMode mode, Menu menu) {
-            // Here you can perform updates to the CAB due to
-            // an invalidate() request
-            nr = 0;
-            return false;
+            return inputVal.substring(0,1).toUpperCase()
+                    + inputVal.substring(1).toLowerCase();
         }
     }
 }
