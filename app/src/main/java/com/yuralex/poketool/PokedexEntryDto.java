@@ -43,14 +43,44 @@ public class PokedexEntryDto {
         return metadata.getCandyToEvolve();
     }
 
+    private int getCandyRemaining() {
+        return getCandy() % getCandyToEvolve();
+    }
+
     public int getEvolutions() {
         if (getCandyToEvolve() == 0)
             return 0;
 
-        return candy / getCandyToEvolve();
+        return getCandy() / getCandyToEvolve();
+    }
+
+    public int getEvolutionsExtra() {
+        if (getCandyToEvolve() == 0)
+            return 0;
+
+        // +1 candy for each evolution
+        int remainingCandy = getCandyRemaining() + getEvolutions();
+        int extraEvolutions = remainingCandy / getCandyToEvolve();
+
+        int totalPossibleEvolutions = getEvolutions() + extraEvolutions;
+        int grindablePokemon = getPokemonCount() - totalPossibleEvolutions;
+        if (grindablePokemon <= 0)
+            return extraEvolutions;
+
+        // +1 candy for every grinded pokemon
+        while (grindablePokemon > 1) {
+            remainingCandy++;
+            grindablePokemon--;
+            if (remainingCandy >= getCandyToEvolve()) {
+                remainingCandy -= getCandyToEvolve();
+                extraEvolutions++;
+            }
+        }
+
+        return extraEvolutions;
     }
 
     public int getPokemonForGrinder() {
-        return getPokemonCount() - getEvolutions();
+        return getPokemonCount() - getEvolutions() - getEvolutionsExtra();
     }
 }

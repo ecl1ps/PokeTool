@@ -163,7 +163,7 @@ public class PokedexFragment extends Fragment implements MainActivity.Updatable 
                 } else {
                     thirdLine.setTextColor(ContextCompat.getColor(getContext(), android.R.color.tertiary_text_light));
                 }
-                fourthLine.setText(String.format(Locale.ROOT, "E %d P %d", entry.getEvolutions(), entry.getPokemonForGrinder()));
+                fourthLine.setText(String.format(Locale.ROOT, "E %d P %d", entry.getEvolutions() + entry.getEvolutionsExtra(), entry.getPokemonForGrinder()));
                 PokemonImg pokeImg = images.get(pokedexId);
                 if (pokeImg != null) {
                     imageView.setImageResource(images.get(pokedexId).getImagem());
