@@ -90,6 +90,11 @@ public class MainActivity extends AppCompatActivity implements AppUpdateLoader.O
                 try {
                     NianticManager nianticManager = NianticManager.getInstance();
                     PokemonGo go = nianticManager.getPokemonGo();
+                    if (go == null) {
+                        startActivity(new Intent(this, LoginActivity.class));
+                        finish();
+                        return false;
+                    }
                     go.getInventories().updateInventories(true);
                 } catch (LoginFailedException | RemoteServerException e) {
                     e.printStackTrace();
