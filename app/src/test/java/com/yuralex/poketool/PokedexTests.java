@@ -65,4 +65,19 @@ public class PokedexTests {
         assertEquals(entry.getEvolutionsExtra(), 1);
         assertEquals(entry.getPokemonForGrinder(), 1);
     }
+
+    @Test
+    public void entryEvolutionsWeedle() throws Exception {
+        PokedexEntryDto entry; //Weedle
+
+        entry = new PokedexEntryDto(13, 24, 137);
+        assertEquals(entry.getEvolutions(), 11);
+        assertEquals(entry.getEvolutionsExtra(), 2);
+        assertEquals(entry.getPokemonForGrinder(), 11);
+
+        entry = new PokedexEntryDto(13, 14, 147);
+        assertEquals(entry.getEvolutions(), 12);
+        assertEquals(entry.getEvolutionsExtra(), 1);
+        assertEquals(entry.getPokemonForGrinder(), 1);
+    }
 }

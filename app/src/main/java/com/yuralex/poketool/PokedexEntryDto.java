@@ -61,6 +61,7 @@ public class PokedexEntryDto {
         // +1 candy for each evolution
         int remainingCandy = getCandyRemaining() + getEvolutions();
         int extraEvolutions = remainingCandy / getCandyToEvolve();
+        remainingCandy -= extraEvolutions * getCandyToEvolve();
 
         int totalPossibleEvolutions = getEvolutions() + extraEvolutions;
         int grindablePokemon = getPokemonCount() - totalPossibleEvolutions;
