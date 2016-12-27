@@ -40,7 +40,7 @@ public class PokedexEntryDto {
     }
 
     public int getCandyToEvolve() {
-        return metadata.getCandyToEvolve();
+        return metadata != null ? metadata.getCandyToEvolve() : -1;
     }
 
     private int getCandyRemaining() {
@@ -48,14 +48,14 @@ public class PokedexEntryDto {
     }
 
     public int getEvolutions() {
-        if (getCandyToEvolve() == 0)
+        if (getCandyToEvolve() <= 0)
             return 0;
 
         return getCandy() / getCandyToEvolve();
     }
 
     public int getEvolutionsExtra() {
-        if (getCandyToEvolve() == 0)
+        if (getCandyToEvolve() <= 0)
             return 0;
 
         // +1 candy for each evolution

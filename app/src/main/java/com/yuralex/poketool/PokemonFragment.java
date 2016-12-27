@@ -196,15 +196,11 @@ public class PokemonFragment extends Fragment implements MainActivity.Updatable 
     }
 
     private void loadPokemons() {
-        try {
-            if (mGo != null) {
-                mPokemons = new ArrayList<>();
-                List<Pokemon> pokemons = mGo.getInventories().getPokebank().getPokemons();
-                for (Pokemon p: pokemons)
-                    mPokemons.add(new PokemonDto(p));
-            }
-        } catch (LoginFailedException | RemoteServerException e) {
-            e.printStackTrace();
+        if (mGo != null) {
+            mPokemons = new ArrayList<>();
+            List<Pokemon> pokemons = mGo.getInventories().getPokebank().getPokemons();
+            for (Pokemon p: pokemons)
+                mPokemons.add(new PokemonDto(p));
         }
     }
 

@@ -25,12 +25,11 @@ public class PokedexDto implements Parcelable {
         for (int pokedexId = 1; pokedexId < entryCount; ++pokedexId) {
             PokemonIdOuterClass.PokemonId pokemonId = PokemonIdOuterClass.PokemonId.forNumber(pokedexId);
             PokemonMeta meta = PokemonMetaRegistry.getMeta(pokemonId);
-            PokemonFamilyIdOuterClass.PokemonFamilyId familyId = meta.getFamily();
 
             PokedexEntryDto entry = new PokedexEntryDto(
                 pokedexId,
                 pokebank.getPokemonByPokemonId(pokemonId).size(),
-                candyJar.getCandies(familyId)
+                meta != null ? candyJar.getCandies(meta.getFamily()) : -1
             );
 
             entries.add(pokedexId - 1, entry);

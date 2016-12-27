@@ -22,6 +22,7 @@ import com.omkarmoghe.pokemap.views.LoginActivity;
 import com.pokegoapi.api.PokemonGo;
 import com.pokegoapi.api.inventory.Inventories;
 import com.pokegoapi.api.pokemon.Pokemon;
+import com.pokegoapi.exceptions.CaptchaActiveException;
 import com.pokegoapi.exceptions.LoginFailedException;
 import com.pokegoapi.exceptions.RemoteServerException;
 
@@ -98,13 +99,9 @@ public class PokedexFragment extends Fragment implements MainActivity.Updatable 
     }
 
     private void loadPokedex() {
-        try {
-            if (mGo != null) {
-                Inventories inventories = mGo.getInventories();
-                pokedex = new PokedexDto(inventories.getPokebank(), inventories.getCandyjar());
-            }
-        } catch (LoginFailedException | RemoteServerException e) {
-            e.printStackTrace();
+        if (mGo != null) {
+            Inventories inventories = mGo.getInventories();
+            pokedex = new PokedexDto(inventories.getPokebank(), inventories.getCandyjar());
         }
     }
 
@@ -157,7 +154,10 @@ public class PokedexFragment extends Fragment implements MainActivity.Updatable 
                     firstLine.setTextColor(ContextCompat.getColor(getContext(), android.R.color.tertiary_text_light));
                     secondLine.setTextColor(ContextCompat.getColor(getContext(), android.R.color.tertiary_text_light));
                 }
-                thirdLine.setText(String.format(Locale.ROOT, "candies %d/%d", entry.getCandy(), entry.getCandyToEvolve()));
+                if (entry.getCandy() < 0)
+                    thirdLine.setText("candies ?/?");
+                else
+                    thirdLine.setText(String.format(Locale.ROOT, "candies %d/%d", entry.getCandy(), entry.getCandyToEvolve()));
                 if (entry.getCandy() >= entry.getCandyToEvolve() && entry.getCandyToEvolve() > 0) {
                     thirdLine.setTextColor(ContextCompat.getColor(getContext(), android.R.color.holo_green_dark));
                 } else {
