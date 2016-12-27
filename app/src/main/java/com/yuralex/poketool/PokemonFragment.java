@@ -253,7 +253,7 @@ public class PokemonFragment extends Fragment implements MainActivity.Updatable 
                 thirdLine.setText(String.format(Locale.ROOT, "CP%d lv%.1f", p.getCp(), p.getLevel()));
                 fourthLine.setText(String.format(Locale.ROOT, "%d/%d/%d",
                         p.getIndividualAttack(), p.getIndividualDefense(), p.getIndividualStamina()));
-                imageView.setImageResource(mPokemonImages.get(p.getPokemonId()).getImagem());
+                imageView.setImageResource(mPokemonImages.get(p.getPokemonId()).getImageResourceId());
             }
 
             rowView.setBackgroundColor(Color.TRANSPARENT); //default color

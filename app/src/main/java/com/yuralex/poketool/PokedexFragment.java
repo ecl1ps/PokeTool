@@ -166,7 +166,7 @@ public class PokedexFragment extends Fragment implements MainActivity.Updatable 
                 fourthLine.setText(String.format(Locale.ROOT, "E %d P %d", entry.getEvolutions() + entry.getEvolutionsExtra(), entry.getPokemonForGrinder()));
                 PokemonImg pokeImg = images.get(pokedexId);
                 if (pokeImg != null) {
-                    imageView.setImageResource(images.get(pokedexId).getImagem());
+                    imageView.setImageResource(images.get(pokedexId).getImageResourceId());
                 }
             } else {
                 secondLine.setText("");
