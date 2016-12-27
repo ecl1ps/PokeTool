@@ -74,6 +74,21 @@ public class MainActivity extends AppCompatActivity implements AppUpdateLoader.O
             });
             tabLayout.setupWithViewPager(mViewPager);
         }
+
+        final Context ctx = this;
+        new AppUpdateLoader(this, new AppUpdateLoader.OnAppUpdateEventListener() {
+            @Override
+            public void onAppUpdateEvent(AppUpdateEvent event) {
+                if (event.status != AppUpdateEvent.OK)
+                    return;
+
+                if (doWeHaveReadWritePermission(ctx)) {
+                    showAppUpdateDialog(ctx, event.appUpdate);
+                } else{
+                    getReadWritePermission();
+                }
+            }
+        }).execute();
     }
 
     @Override
@@ -181,7 +196,7 @@ public class MainActivity extends AppCompatActivity implements AppUpdateLoader.O
     private void showAppUpdateDialog(final Context context, final AppUpdate update) {
         AlertDialog.Builder builder = new AlertDialog.Builder(context);
         AlertDialog dialog = builder.create();
-        if(!dialog.isShowing()) {
+        if (!dialog.isShowing()) {
             builder = new AlertDialog.Builder(context)
                     .setTitle(R.string.update_available_title)
                     .setMessage(context.getString(R.string.app_name) + " " + update.version + " " + context.getString(R.string.update_available_long) + "\n\n" + context.getString(R.string.changes) + "\n\n" + update.changelog)
