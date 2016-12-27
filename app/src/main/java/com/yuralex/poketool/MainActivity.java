@@ -25,6 +25,7 @@ import com.omkarmoghe.pokemap.controllers.app_preferences.PokemapSharedPreferenc
 import com.omkarmoghe.pokemap.controllers.net.NianticManager;
 import com.omkarmoghe.pokemap.views.LoginActivity;
 import com.pokegoapi.api.PokemonGo;
+import com.pokegoapi.exceptions.CaptchaActiveException;
 import com.pokegoapi.exceptions.LoginFailedException;
 import com.pokegoapi.exceptions.RemoteServerException;
 import com.yuralex.poketool.updater.AppUpdate;
@@ -111,7 +112,7 @@ public class MainActivity extends AppCompatActivity implements AppUpdateLoader.O
                         return false;
                     }
                     go.getInventories().updateInventories(true);
-                } catch (LoginFailedException | RemoteServerException e) {
+                } catch (LoginFailedException | RemoteServerException | CaptchaActiveException e) {
                     e.printStackTrace();
                 }
                 for (int i = 0; i < mCollectionPagerAdapter.getCount(); i++) {

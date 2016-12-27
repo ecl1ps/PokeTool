@@ -2,6 +2,7 @@ package com.omkarmoghe.pokemap.models.login;
 
 import com.pokegoapi.auth.CredentialProvider;
 import com.pokegoapi.auth.PtcCredentialProvider;
+import com.pokegoapi.exceptions.CaptchaActiveException;
 import com.pokegoapi.exceptions.LoginFailedException;
 import com.pokegoapi.exceptions.RemoteServerException;
 
@@ -43,7 +44,7 @@ public class PtcLoginInfo extends LoginInfo {
         return PROVIDER_PTC;
     }
 
-    public CredentialProvider getCredentialProvider(OkHttpClient client) throws LoginFailedException, RemoteServerException {
+    public CredentialProvider getCredentialProvider(OkHttpClient client) throws LoginFailedException, RemoteServerException, CaptchaActiveException {
         return new PtcCredentialProvider(client, mUsername, mPassword);
     }
 }

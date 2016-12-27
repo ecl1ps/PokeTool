@@ -1,6 +1,7 @@
 package com.omkarmoghe.pokemap.models.login;
 
 import com.pokegoapi.auth.CredentialProvider;
+import com.pokegoapi.exceptions.CaptchaActiveException;
 import com.pokegoapi.exceptions.LoginFailedException;
 import com.pokegoapi.exceptions.RemoteServerException;
 
@@ -39,5 +40,5 @@ public abstract class LoginInfo {
         return builder.build();
     }
 
-    public abstract CredentialProvider getCredentialProvider(OkHttpClient client) throws LoginFailedException, RemoteServerException;
+    public abstract CredentialProvider getCredentialProvider(OkHttpClient client) throws LoginFailedException, RemoteServerException, CaptchaActiveException;
 }

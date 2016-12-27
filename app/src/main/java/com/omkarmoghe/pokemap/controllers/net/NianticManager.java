@@ -44,8 +44,8 @@ public class NianticManager {
             OkHttpClient http = new OkHttpClient();
             try {
                 // check readme for other example
-                PokemonGo go = new PokemonGo(new PtcCredentialProvider(http, params[0],
-                        params[1]), http);
+                PokemonGo go = new PokemonGo(http);
+                go.login(new PtcCredentialProvider(http, params[0], params[1]));
                 authToken = go.getAuthInfo().getToken().toString();
                 mPokemonGo = go;
 //            } catch (LoginFailedException | RemoteServerException e) {
@@ -94,7 +94,8 @@ public class NianticManager {
             OkHttpClient http = new OkHttpClient();
             try {
                 // check readme for other example
-                mPokemonGo = new PokemonGo(params[0].getCredentialProvider(http), http);
+                mPokemonGo = new PokemonGo(http);
+                mPokemonGo.login(params[0].getCredentialProvider(http));
 //            } catch (LoginFailedException | RemoteServerException e) {
             } catch (Exception e) {
                 mPokemonGo = null;
