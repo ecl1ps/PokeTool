@@ -1,15 +1,14 @@
 package com.yuralex.poketool.updater;
 
 import android.app.DownloadManager;
+import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.Uri;
-import android.support.compat.BuildConfig;
-import android.support.v4.content.FileProvider;
+import android.widget.Toast;
 
-import com.yuralex.poketool.MainActivity;
 import com.yuralex.poketool.R;
 
 import java.io.File;
@@ -17,9 +16,7 @@ import java.io.File;
 public class AppUpdateDialog {
     public static void downloadAndInstallAppUpdate(final Context context, AppUpdate update) {
         try {
-            String destination = context.getExternalFilesDir(null) + "/";
-            String fileName = "update.apk";
-            destination += fileName;
+            final String destination = context.getExternalFilesDir(null) + "/" + "update.apk";
             final Uri uri = Uri.parse("file://" + destination);
 
             //Delete update file if exists
@@ -31,7 +28,7 @@ public class AppUpdateDialog {
             //set downloadmanager
             final String url = update.assetUrl;
             DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
-            request.setTitle(context.getString(R.string.updating));
+            request.setTitle(context.getString(R.string.updating_to, update.version));
 
             //set destination
             request.setDestinationUri(uri);
@@ -41,19 +38,21 @@ public class AppUpdateDialog {
             final long downloadId = manager.enqueue(request);
 
             //set BroadcastReceiver to install app when .apk is downloaded
-            final String finalDestination = destination;
             BroadcastReceiver onComplete = new BroadcastReceiver() {
                 public void onReceive(Context ctxt, Intent intent) {
-                    File fileDestination = new File(finalDestination);
-                    Uri uri = FileProvider.getUriForFile(ctxt,
-                            "com.yuralex.poketool.fileprovider",
-                            fileDestination);
+                    File fileDestination = new File(destination);
 
                     Intent install = new Intent(Intent.ACTION_VIEW);
                     install.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    install.setDataAndType(uri, manager.getMimeTypeForDownloadedFile(downloadId));
+                    install.setDataAndType(Uri.fromFile(fileDestination), manager.getMimeTypeForDownloadedFile(downloadId));
                     install.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                    ctxt.startActivity(install);
+
+                    try {
+                        ctxt.startActivity(install);
+                    } catch (ActivityNotFoundException e) {
+                        Toast.makeText(ctxt, "No application for this type of file.", Toast.LENGTH_LONG).show();
+                    }
+
                     ctxt.unregisterReceiver(this);
                 }
             };
