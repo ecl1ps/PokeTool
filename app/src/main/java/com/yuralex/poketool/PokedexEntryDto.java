@@ -1,8 +1,5 @@
 package com.yuralex.poketool;
 
-import com.pokegoapi.api.pokemon.PokemonMeta;
-import com.pokegoapi.api.pokemon.PokemonMetaRegistry;
-
 import POGOProtos.Enums.PokemonIdOuterClass;
 
 public class PokedexEntryDto {
@@ -10,17 +7,17 @@ public class PokedexEntryDto {
     private final int id;
     private final int pokemonCount;
     private final int candy;
+    private final int candyToEvolve;
 
     private final PokemonIdOuterClass.PokemonId pokemonIdData;
-    private final PokemonMeta metadata;
 
-    public PokedexEntryDto(int id, int pokemonCount, int candy) {
+    public PokedexEntryDto(int id, int pokemonCount, int candy, int candyToEvolve) {
         this.id = id;
         this.pokemonCount = pokemonCount;
         this.candy = candy;
+        this.candyToEvolve = candyToEvolve == 1 ? -1 : candyToEvolve; // niantic sends 1 where candy count is yet not set -> -1 as unknown
 
         pokemonIdData = PokemonIdOuterClass.PokemonId.forNumber(id);
-        metadata = PokemonMetaRegistry.getMeta(pokemonIdData);
     }
 
     public int getId() {
@@ -40,7 +37,7 @@ public class PokedexEntryDto {
     }
 
     public int getCandyToEvolve() {
-        return metadata != null ? metadata.getCandyToEvolve() : -1;
+        return candyToEvolve;
     }
 
     private int getCandyRemaining() {

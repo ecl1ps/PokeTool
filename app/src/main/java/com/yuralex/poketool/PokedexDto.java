@@ -5,14 +5,13 @@ import android.os.Parcelable;
 
 import com.pokegoapi.api.inventory.CandyJar;
 import com.pokegoapi.api.inventory.PokeBank;
-import com.pokegoapi.api.pokemon.PokemonMeta;
-import com.pokegoapi.api.pokemon.PokemonMetaRegistry;
+import com.pokegoapi.main.PokemonMeta;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import POGOProtos.Enums.PokemonFamilyIdOuterClass;
 import POGOProtos.Enums.PokemonIdOuterClass;
+import POGOProtos.Settings.Master.PokemonSettingsOuterClass;
 
 public class PokedexDto implements Parcelable {
 
@@ -24,12 +23,13 @@ public class PokedexDto implements Parcelable {
 
         for (int pokedexId = 1; pokedexId < entryCount; ++pokedexId) {
             PokemonIdOuterClass.PokemonId pokemonId = PokemonIdOuterClass.PokemonId.forNumber(pokedexId);
-            PokemonMeta meta = PokemonMetaRegistry.getMeta(pokemonId);
+            PokemonSettingsOuterClass.PokemonSettings settings = PokemonMeta.getPokemonSettings(pokemonId);
 
             PokedexEntryDto entry = new PokedexEntryDto(
                 pokedexId,
                 pokebank.getPokemonByPokemonId(pokemonId).size(),
-                meta != null ? candyJar.getCandies(meta.getFamily()) : -1
+                settings != null ? candyJar.getCandies(settings.getFamilyId()) : -1,
+                settings != null ? settings.getCandyToEvolve() : -1
             );
 
             entries.add(pokedexId - 1, entry);
@@ -65,6 +65,7 @@ public class PokedexDto implements Parcelable {
             out.writeInt(entry.getId());
             out.writeInt(entry.getPokemonCount());
             out.writeInt(entry.getCandy());
+            out.writeInt(entry.getCandyToEvolve());
         }
     }
 
@@ -75,6 +76,7 @@ public class PokedexDto implements Parcelable {
 
         for (int i = 0; i < entryCount; ++i) {
             PokedexEntryDto entry = new PokedexEntryDto(
+                in.readInt(),
                 in.readInt(),
                 in.readInt(),
                 in.readInt()

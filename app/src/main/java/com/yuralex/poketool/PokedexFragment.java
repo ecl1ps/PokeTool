@@ -156,6 +156,10 @@ public class PokedexFragment extends Fragment implements MainActivity.Updatable 
                 }
                 if (entry.getCandy() < 0)
                     thirdLine.setText("candies ?/?");
+                else if (entry.getCandyToEvolve() < 0)
+                    thirdLine.setText(String.format(Locale.ROOT, "candies %d/?", entry.getCandy()));
+                else if (entry.getCandyToEvolve() == 0)
+                    thirdLine.setText(String.format(Locale.ROOT, "candies %d/-", entry.getCandy()));
                 else
                     thirdLine.setText(String.format(Locale.ROOT, "candies %d/%d", entry.getCandy(), entry.getCandyToEvolve()));
                 if (entry.getCandy() >= entry.getCandyToEvolve() && entry.getCandyToEvolve() > 0) {
