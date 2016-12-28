@@ -24,5 +24,6 @@
         android:layout_below="@+id/spinner"
         android:gravity="center"
         android:paddingBottom="64dp"
-        android:clipToPadding="false" />
+        android:clipToPadding="false"
+        android:fastScrollEnabled="true"/>
 </RelativeLayout>
